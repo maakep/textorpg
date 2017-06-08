@@ -1,0 +1,53 @@
+.game-logo {
+  animation: linear-spinner infinite 18s linear;
+  height: 30px;
+}
+
+.game-header {
+  background-color: #222;
+  padding: 10px;
+  color: white;
+  
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.game-input {
+  background: none;
+  border: none;
+  padding: 5px;
+  font-size: 2rem;
+  width: 100%;
+
+  color: white;
+  caret-color: white;
+}
+.game-input:focus {
+  outline: none;
+}
+
+.game-body {
+  font-size: 2rem;
+}
+
+.game-message {
+  padding: 10px 0px 10px 20px;
+}
+.game-message:before {
+  content: '•';
+  margin-right: 20px;
+}
+.game-message:nth-child(odd){
+  background-color: rgba(0,0,0, 0.1);
+}
+
+.game-message-wrapper {
+  padding: 10px;
+}
+
+/* Animations */
+@keyframes linear-spinner {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
