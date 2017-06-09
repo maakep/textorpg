@@ -15,7 +15,6 @@ type StateType = {
 };
 
 class App extends React.Component<{}, StateType> {
-
   constructor(props: {}) {
     super(props);
     this.state = {
@@ -38,26 +37,32 @@ class App extends React.Component<{}, StateType> {
     this.validateMessage(msg);
   }
   addMessage(msg: string) {
-      let msgList = this.state.messages;
-      if (msgList.unshift(msg) > 100) {
-          msgList.pop();
-      }
-      this.setState({messages: msgList});
-      return msgList;
+    let msgList = this.state.messages;
+    if (msgList.unshift(msg) > 100) {
+        msgList.pop();
+    }
+    this.setState({messages: msgList});
+    return msgList;
   }
   validateMessage(msg: string) {
-      let splitMsg = msg.split(' ');
-      if (splitMsg[0] === 'walk') {
-          if (splitMsg[1] === 'north') {
-              this.addMessage('You venture north!');
-              var coord = Object.assign({},this.state.coordinates);
-              coord.y++;
-              socket.emit('client:move', {from: this.state.coordinates, to: coord});
-              this.setState({coordinates: coord});
-          } else {
-            this.addMessage('You walk in a short circle, getting nowhere...');
-          }
+    let splitMsg = msg.split(' ');
+    if (splitMsg[0] === 'walk') {
+      var coord = Object.assign({},this.state.coordinates);
+
+      if (splitMsg[1] === 'north') {
+          coord.y++;
+      } else if (splitMsg[1] === 'south') {
+          coord.y--;
+      } else if (splitMsg[1] === 'west') {
+          coord.x--;
+      } else if (splitMsg[1] === 'east') {
+          coord.x++;            
       }
+
+      this.addMessage('You venture ' + ((splitMsg[1] != null) ? splitMsg[1] : 'around in circles, getting nowhere'));
+      socket.emit('client:move', {from: this.state.coordinates, to: coord});
+      this.setState({coordinates: coord});
+    }
   }
 
   messagePosted(msg: string) {
