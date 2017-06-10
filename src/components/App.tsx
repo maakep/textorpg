@@ -35,7 +35,7 @@ class App extends React.Component<{}, StateType> {
 
   addPlayerMessage(msg: string) {
     this.addMessage(msg);
-    if(this.validateMessage(msg)) {
+    if (Validate.validateMessage(this, msg, socket)) {
      socket.emit('client:message', {coordinates: this.state.coordinates, message: msg}); 
     };
   }
@@ -44,12 +44,9 @@ class App extends React.Component<{}, StateType> {
     if (msgList.unshift(msg) > 100) {
         msgList.pop();
     }
-    
+
     this.setState({messages: msgList});
     return msgList;
-  }
-  validateMessage(msg: string) {
-    Validate.validateMessage(this, msg, socket);
   }
 
   messagePosted(msg: string) {

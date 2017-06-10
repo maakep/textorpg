@@ -1,4 +1,5 @@
 import App from '../App';
+
 export function validateMessage(obj: App, msg: string, socket: SocketIOClient.Socket) {
     let splitMsg = msg.split(' ');
     if (splitMsg[0] === 'walk') {

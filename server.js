@@ -20,19 +20,18 @@ io.on('connection', function(socket){
   socket.join(ALL_CHAT);
   socket.in(SPAWN_LOCATION).emit('server:message', '~~ A stranger appears out of nothing ~~');
   socket.on('disconnecting', function() {
-    console.log(socket.rooms);
+    console.log("Client left: " + socket.handshake.address);
     socket.in(socket.rooms[0]).emit('server:message', '~~ Somewhere in the world a stranger disappears with a light popping sound ~~');
   });
 
 
   socket.on('client:message', function(data) {
+    console.log(data);
     socket.in(_(data.coordinates)).emit('server:message', data.message);
   });
 
   socket.on('client:move', function(data) {
-    console.log('Client moves from: ' + data.from.y + ' to: ' + data.to.y);
     if (!equalCoordinates(data.from, data.to)) {
-      console.log("not same coord");
       socket.leave(_(data.from));
       socket.join(_(data.to));
     }
