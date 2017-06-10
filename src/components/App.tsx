@@ -2,6 +2,8 @@ import * as React from 'react';
 import Header from './header';
 import Game from './game';
 import * as io from 'socket.io-client';
+import * as Validate from './helpers/message-validator';
+
 let socket = io();
 
 import '../Game.css';
@@ -32,37 +34,22 @@ class App extends React.Component<{}, StateType> {
   }
 
   addPlayerMessage(msg: string) {
-    socket.emit('client:message', {coordinates: this.state.coordinates, message: msg});
-    let msgList = this.addMessage(msg);
-    this.validateMessage(msg);
+    this.addMessage(msg);
+    if(this.validateMessage(msg)) {
+     socket.emit('client:message', {coordinates: this.state.coordinates, message: msg}); 
+    };
   }
   addMessage(msg: string) {
     let msgList = this.state.messages;
     if (msgList.unshift(msg) > 100) {
         msgList.pop();
     }
+    
     this.setState({messages: msgList});
     return msgList;
   }
   validateMessage(msg: string) {
-    let splitMsg = msg.split(' ');
-    if (splitMsg[0] === 'walk') {
-      var coord = Object.assign({},this.state.coordinates);
-
-      if (splitMsg[1] === 'north') {
-          coord.y++;
-      } else if (splitMsg[1] === 'south') {
-          coord.y--;
-      } else if (splitMsg[1] === 'west') {
-          coord.x--;
-      } else if (splitMsg[1] === 'east') {
-          coord.x++;            
-      }
-
-      this.addMessage('You venture ' + ((splitMsg[1] != null) ? splitMsg[1] : 'around in circles, getting nowhere'));
-      socket.emit('client:move', {from: this.state.coordinates, to: coord});
-      this.setState({coordinates: coord});
-    }
+    Validate.validateMessage(this, msg, socket);
   }
 
   messagePosted(msg: string) {
