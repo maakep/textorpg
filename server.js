@@ -29,7 +29,10 @@ io.on('connection', function(socket){
   });
 
   socket.on('client:move', function(data) {
-    var blocked = isBlocked(data.to);
+    var location = getLocation(data.to);
+    var blocked = location.isBlocker;
+    var desc = location.desc;
+    var items = location.items;
 
     if (!equalCoordinates(data.from, data.to) && !blocked) {
       // Leave the room
@@ -46,8 +49,21 @@ io.on('connection', function(socket){
     }
 
     var room = io.sockets.adapter.rooms[_(data.to)];
-    if (room != null && room.length > 1 && !blocked) {
-      socket.emit('server:message', '~~ You see ' + (room.length-1) + ' stranger(s) here ~~');
+    if (room != null && !blocked) {
+      var message = '';
+      if (location.desc) {
+        message += location.desc;
+      }
+      if (location.items) {
+        items.forEach(function(item) {
+          message += ', ' + item.name
+        });
+      }
+      if (room.length > 1) {
+        message += 'You see ' + (room.length-1) + ' stranger(s) here. ';
+      }
+      
+      socket.emit('server:message', message);
     }
   });
 
@@ -65,14 +81,13 @@ function equalCoordinates(coordinatesA, coordinatesB) {
   return coordinatesA.x == coordinatesB.x && coordinatesA.y == coordinatesB.y;
 }
 
-function isBlocked(coordinates) {
+function getLocation(coordinates) {
   for (i = 0; i < world.length; i++) {
     if (equalCoordinates(world[i].coordinates, coordinates)) {
-      var block = (world[i].isblocker == true);
-      return block;
+      return world[i];
     }
   }
-  return false;
+  return {};
 }
 
 let letter = {
@@ -84,9 +99,10 @@ let world = [
   {
       coordinates: { x: 1, y: 1 },
       items: [letter],
+      desc: 'It\'s a beautiful area'
   },
   {
       coordinates: { x: -1, y: -1 },
-      isblocker: true
+      isBlocker: true
   },
 ];

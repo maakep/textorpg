@@ -11,5 +11,6 @@ export type Coordinates = {
 export type Location = { 
   coordinates: Coordinates,
   items?: Item[],
-  isblocker?: boolean
+  isblocker?: boolean,
+  desc?: string
 }

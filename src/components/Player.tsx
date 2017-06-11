@@ -14,7 +14,7 @@ type StateType = {
     location: Location
 };
 
-export class App extends React.Component<{}, StateType> {
+export class Player extends React.Component<{}, StateType> {
   constructor(props: {}) {
     super(props);
     this.state = {
@@ -63,4 +63,4 @@ export class App extends React.Component<{}, StateType> {
   }
 }
 
-export default App;
+export default Player;

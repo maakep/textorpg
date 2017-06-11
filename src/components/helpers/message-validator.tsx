@@ -1,4 +1,4 @@
-import App from '../App';
+import Player from '../Player';
 import {Location, Item} from './types';
 
 const WALK = {
@@ -15,7 +15,7 @@ const SLASH = {
     STATS: '/stats',
 }
 
-export function validateMessage(obj: App, msg: string, socket: SocketIOClient.Socket) {
+export function validateMessage(obj: Player, msg: string, socket: SocketIOClient.Socket) {
     msg = msg.toLowerCase();
     let splitMsg = msg.split(' ');
     if (splitMsg[0] === WALK.CMD) {
