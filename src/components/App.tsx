@@ -3,6 +3,7 @@ import Header from './header';
 import Game from './game';
 import * as io from 'socket.io-client';
 import * as Validate from './helpers/message-validator';
+import {Location} from './helpers/types';
 
 let socket = io();
 
@@ -10,33 +11,30 @@ import '../Game.css';
 
 type StateType = {
     messages: string[],
-    coordinates: {
-      x: number,
-      y: number,
-    }
+    location: Location
 };
 
-class App extends React.Component<{}, StateType> {
+export class App extends React.Component<{}, StateType> {
   constructor(props: {}) {
     super(props);
     this.state = {
       messages: [],
-      coordinates: {x: 0, y: 0},
+      location: {
+        coordinates: {x: 0, y: 0},
+      }
     }
   }
 
   componentDidMount() {
-    console.log("mounted");
     socket.on('server:message', (data: any) => {
-      console.log("messaged");
       this.addMessage(data);
     });
   }
 
   addPlayerMessage(msg: string) {
-    this.addMessage(msg);
     if (Validate.validateMessage(this, msg, socket)) {
-     socket.emit('client:message', {coordinates: this.state.coordinates, message: msg}); 
+      this.addMessage(msg);
+      socket.emit('client:message', {coordinates: this.state.location.coordinates, message: msg}); 
     };
   }
   addMessage(msg: string) {
@@ -57,7 +55,7 @@ class App extends React.Component<{}, StateType> {
       <div className="game">
         <Header 
           post={(msg: string) => {this.messagePosted(msg); }} 
-          coordinates={this.state.coordinates}
+          coordinates={this.state.location.coordinates}
         />
         <Game messages={this.state.messages} />
       </div>
