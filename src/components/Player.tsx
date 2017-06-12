@@ -3,7 +3,7 @@ import Header from './header';
 import Game from './game';
 import * as io from 'socket.io-client';
 import * as Validate from './helpers/message-validator';
-import {Location} from './helpers/types';
+import {Location, Item} from './helpers/types';
 
 let socket = io();
 
@@ -11,7 +11,8 @@ import '../Game.css';
 
 type StateType = {
     messages: string[],
-    location: Location
+    location: Location,
+    inventory: Item[]
 };
 
 export class Player extends React.Component<{}, StateType> {
@@ -21,7 +22,8 @@ export class Player extends React.Component<{}, StateType> {
       messages: [],
       location: {
         coordinates: {x: 0, y: 0},
-      }
+      },
+      inventory: []
     }
   }
 

@@ -28,6 +28,19 @@ io.on('connection', function(socket){
     socket.in(_(data.coordinates)).emit('server:message', data.message);
   });
 
+  socket.on('client:take', function(data) {
+    var location = getLocation(data.coordinates);
+    var items = location.items;
+    var item;
+    if (items != null) 
+      item = getItem(data.item, location);
+    if (item > -1)
+      location.items.splice(item, 1);
+    
+    updateLocation(data.coordinates, location);
+    socket.emit('server:take', item);
+  });
+
   socket.on('client:move', function(data) {
     var location = getLocation(data.to);
     var blocked = location.isBlocker;
@@ -55,15 +68,18 @@ io.on('connection', function(socket){
         message += location.desc;
       }
       if (location.items) {
+        message += 'The following items are laying around: ';
         items.forEach(function(item) {
-          message += ', ' + item.name
+          message += item.name + ', ';
         });
+        message = message.slice(0, -2);
       }
       if (room.length > 1) {
         message += 'You see ' + (room.length-1) + ' stranger(s) here. ';
       }
-      
-      socket.emit('server:message', message);
+      if (message != '') {
+        socket.emit('server:message', message);
+      }
     }
   });
 
@@ -90,16 +106,40 @@ function getLocation(coordinates) {
   return {};
 }
 
+function getItem(item, location) {
+  for (var i = 0; i < location.items.length; i++) {
+    console.log("item loop: " + location.items[i]);
+    if (location.items[i].name == item) {
+      return location.items[i];
+    }
+  }
+  return {};
+}
+
+function updateLocation(coordinates, location) {
+  for (i = 0; i < world.length; i++) {
+    if (equalCoordinates(world[i].coordinates, coordinates)) {
+      world[i] = location;
+      console.log(world);
+    }
+  }
+}
+
 let letter = {
-  name: 'Letter',
+  name: 'letter',
+  value: 3
+};
+
+let getter = {
+  name: 'getter',
   value: 3
 };
 
 let world = [
   {
       coordinates: { x: 1, y: 1 },
-      items: [letter],
-      desc: 'It\'s a beautiful area'
+      items: [letter, getter],
+      desc: 'It\'s a beautiful area. '
   },
   {
       coordinates: { x: -1, y: -1 },

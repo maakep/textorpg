@@ -15,6 +15,10 @@ const SLASH = {
     STATS: '/stats',
 }
 
+const TAKE = {
+    CMD: 'take'
+}
+
 export function validateMessage(obj: Player, msg: string, socket: SocketIOClient.Socket) {
     msg = msg.toLowerCase();
     let splitMsg = msg.split(' ');
@@ -51,22 +55,20 @@ export function validateMessage(obj: Player, msg: string, socket: SocketIOClient
             obj.addMessage('You are currently at {' + obj.state.location.coordinates.x + ', ' + obj.state.location.coordinates.y + '}');
         }
         return false;
+    } else if (splitMsg[0] === TAKE.CMD) {
+        socket.emit('client:take', {coordinates: obj.state.location.coordinates, item: splitMsg[1]});
+        socket.on('server:take', function(item: Item) {
+            if (item == null) 
+                obj.addMessage('Your hands search but you cannot find any ' + item);
+            
+
+            // TODO: IT DOUBLES THE INVENTORY FOR SOME REASON IT CALLS THIS CODE FOR EVERY OBJECT IN INVENTORY OR SEOMTHING
+            var inventory: Item[] = obj.state.inventory;
+            inventory.push(item);
+            console.log(item);
+            obj.setState({inventory: inventory});
+            console.log(inventory);
+        });
     }
     return true;
 }
-
-let letter: Item = {
-    name: 'Letter',
-    value: 3
-};
-
-let WORLD: Location[] = [
-    {
-        coordinates: { x: 1, y: 1 },
-        items: [letter],
-    },
-    {
-        coordinates: { x: -1, y: -1 },
-        isblocker: true
-    },
-];
