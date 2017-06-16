@@ -1,6 +1,6 @@
 export type Item = {
   name: string,
-  value: number
+  value: number,
 };
 
 export type Coordinates = {
@@ -11,6 +11,16 @@ export type Coordinates = {
 export type Location = { 
   coordinates: Coordinates,
   items?: Item[],
-  isblocker?: boolean,
-  desc?: string
+  isBlocker?: boolean,
+  desc?: string,
+}
+
+export type Message = {
+  coordinates: Coordinates,
+  message: string,
+}
+
+export type TakeItem = {
+  coordinates: Coordinates,
+  item: string,
 }

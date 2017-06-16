@@ -30,18 +30,26 @@ io.on('connection', function(socket){
 
   socket.on('client:take', function(data) {
     var location = getLocation(data.coordinates);
-    var items = location.items;
+    var allItems = location.items;
     var item;
-    if (items != null) 
+    
+    if (allItems != null) {
       item = getItem(data.item, location);
-    if (item > -1)
+    } else {
+      return;
+    }
+
+    if (item > -1) 
+    {
+      console.log(item);
       location.items.splice(item, 1);
+    }
     
     updateLocation(data.coordinates, location);
     socket.emit('server:take', item);
   });
 
-  socket.on('client:move', function(data) {
+  socket.on('client:give', function(data) {
     var location = getLocation(data.to);
     var blocked = location.isBlocker;
     var desc = location.desc;

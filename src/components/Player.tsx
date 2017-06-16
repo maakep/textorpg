@@ -3,7 +3,7 @@ import Header from './header';
 import Game from './game';
 import * as io from 'socket.io-client';
 import * as Validate from './helpers/message-validator';
-import {Location, Item} from './helpers/types';
+import {Location, Item, Coordinates} from './helpers/types';
 
 let socket = io();
 
@@ -28,8 +28,22 @@ export class Player extends React.Component<{}, StateType> {
   }
 
   componentDidMount() {
-    socket.on('server:message', (data: any) => {
-      this.addMessage(data);
+    let player: Player = this;
+    socket.on('server:message', (data: string) => {
+      player.addMessage(data);
+    });
+    socket.on('server:take', function(item: Item, inputItem: string) {
+        if (item == null) {
+            player.addMessage('Your hands search but you cannot find any ' + inputItem);
+            return;
+        }
+
+        var inventory: Item[] = player.state.inventory;
+        inventory.push(item);
+        player.setState({inventory: inventory});
+    });
+    socket.on('server:move', function(data: Coordinates) {
+      player.setState({location: {coordinates: data}});
     });
   }
 
