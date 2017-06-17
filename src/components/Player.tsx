@@ -15,8 +15,12 @@ type StateType = {
     inventory: Item[]
 };
 
-export class Player extends React.Component<{}, StateType> {
-  constructor(props: {}) {
+type PropType = {
+  name: string,
+}
+
+export class Player extends React.Component<PropType, StateType> {
+  constructor(props: PropType) {
     super(props);
     this.state = {
       messages: [],
@@ -48,8 +52,9 @@ export class Player extends React.Component<{}, StateType> {
   }
 
   addPlayerMessage(msg: string) {
+    let displayMsg: string = this.props.name + ': ' + msg;
     if (Validate.validateMessage(this, msg, socket)) {
-      this.addMessage(msg);
+      this.addMessage(displayMsg);
       socket.emit('client:message', {coordinates: this.state.location.coordinates, message: msg}); 
     };
   }

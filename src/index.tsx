@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import Player from './components/Player';
+import {EnterName} from './EnterName';
 
 ReactDOM.render(
-  <Player />,
+  <EnterName />,
   document.getElementById('root') as HTMLElement
 );

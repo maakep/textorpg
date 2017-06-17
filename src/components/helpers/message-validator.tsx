@@ -29,7 +29,8 @@ const SLASH = {
 }
 
 const TAKE = {
-    CMD: 'take'
+    CMD: 'take',
+    DESC: 'Pick up an item, take <item>'
 }
 
 export function validateMessage(obj: Player, msg: string, socket: SocketIOClient.Socket) {
@@ -60,6 +61,7 @@ export function validateMessage(obj: Player, msg: string, socket: SocketIOClient
         if(splitMsg[0] === SLASH.HELP.CMD) {
             obj.addMessage(SLASH.HELP.CMD + ' - ' + SLASH.HELP.DESC);
             obj.addMessage(WALK.CMD + ' - ' + WALK.DESC);
+            obj.addMessage(TAKE.CMD + ' - ' + TAKE.DESC);
             obj.addMessage(SLASH.STATS.CMD + ' - ' + SLASH.STATS.DESC);
             obj.addMessage(SLASH.INVENTORY.CMD + ' - ' + SLASH.INVENTORY.DESC);
         } else if (splitMsg[0] === SLASH.STATS.CMD) {
