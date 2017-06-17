@@ -32,10 +32,13 @@ const TAKE = {
     CMD: 'take',
     DESC: 'Pick up an item, take <item>'
 }
-
+export function isCommand(message: string): boolean {
+    return message[0] === '/';
+}
 export function validateMessage(obj: Player, msg: string, socket: SocketIOClient.Socket) {
     msg = msg.toLowerCase();
     let splitMsg = msg.split(' ');
+    
     if (splitMsg[0] === WALK.CMD) {
         var coord = Object.assign({}, obj.state.location.coordinates);
 

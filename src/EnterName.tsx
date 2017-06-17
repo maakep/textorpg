@@ -28,7 +28,7 @@ export class EnterName extends React.Component<null, StateType>{
     render(){
         return (
             (this.state.name != null) 
-                ? <Player name={this.state.name}/> 
+                ? <Player name={this.state.name} /> 
                 : <input onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => this.setName(e)} />
         );
     }

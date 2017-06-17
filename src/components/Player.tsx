@@ -60,11 +60,17 @@ export class Player extends React.Component<PropType, StateType> {
   }
 
   addPlayerMessage(msg: string) {
-    let displayMsg: string = this.props.name + ': ' + msg;
+    let playerPrefixMsg: string = this.props.name + ': ' + msg;
+
+    this.addMessage(playerPrefixMsg);
     if (Validate.validateMessage(this, msg, socket)) {
-      this.addMessage(displayMsg);
-      socket.emit('client:message', {coordinates: this.state.location.coordinates, message: displayMsg }); 
-    };
+      socket.emit('client:message', {coordinates: this.state.location.coordinates, message: playerPrefixMsg }); 
+    }
+  }
+  removeLastMessage() {
+    let msgList = this.state.messages;
+    msgList.shift();
+    this.setState({messages: msgList});
   }
   addMessage(msg: string) {
     let msgList = this.state.messages;

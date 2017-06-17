@@ -25,7 +25,6 @@ io.on('connection', function(socket){
   console.log("Client joined: " + socket.handshake.address);
 	socket.join(SPAWN_LOCATION);
   socket.join(ALL_CHAT);
-  socket.in(SPAWN_LOCATION).emit('server:message', '~~ A stranger appears out of nothing ~~');
   socket.on('disconnecting', function() {
     console.log("Client left: " + socket.handshake.address);
     socket.in(socket.rooms[0]).emit('server:message', '~~ Somewhere in the world a stranger disappears with a light popping sound ~~');
@@ -72,13 +71,12 @@ io.on('connection', function(socket){
 
       // Notify the others in the room
       socket.in(_(data.to)).emit('server:message', '~~ A stranger comes wandering ~~');
-
+    }
       // Location info for player
       var message = getLocationString(location);
       if (!StringHelper.isNullOrWhitespace(message)) {
         socket.emit('server:message', message);
       }
-    } 
   });
 });
 
@@ -94,7 +92,10 @@ function getRoom(coordinates: Types.Coordinates) {
   return io.sockets.adapter.rooms[_(coordinates)];
 }
 function peopleInRoom(room: any): number {
-  return room.length;
+  if (room != null)
+    return room.length;
+
+  return 0;
 }
 
 function getLocationString(location: Types.Location) {
@@ -162,12 +163,13 @@ function getDefaultLocation(coordinates: Types.Coordinates) {
 }
 
 
-function itemGenerator(items: Types.Item[], location: Types.Location, minuteInterval: number) {
-  console.log(location);
+function itemGenerator(items: Types.Item[], location: Types.Location, minuteInterval: number, maxItems: number) {
   setInterval(function(){
-    items.forEach(function(item) {
-      location.items.push(item);
-    });
+    if (location.items.length <= maxItems) {
+      items.forEach(function(item) {
+        location.items.push(item);
+      });
+    }
   }, minuteInterval*1000*60);
 }
 
@@ -194,21 +196,23 @@ let goldOre: Types.Item = {
   value: 50,
 }
 
-const nullWorld: Types.Location = {
-    coordinates: {
-      x: 0,
-      y: 0
-    },
-    isBlocker: false,
-    desc: null,
-    items: [],
-    spawner: null
+let PreAlphaTester: Types.Item = {
+  name: 'Medallion of the Pre-alpha Tester',
+  value: 0
 }
+
 let world: Types.Location[] = [
+  {
+    coordinates: { x: 0, y: 0 },
+    desc: "A protective one way protective barrier. ",
+    items: [PreAlphaTester],
+    spawner: (l) => itemGenerator([PreAlphaTester], l, 0.01, 1),
+    isBlocker: true,
+  },
   {
       coordinates: { x: 1, y: 1 },
       items: [letter, getter],
-      desc: 'It\'s a beautiful area. ',
+      desc: "It's a beautiful area. ",
   },
   {
       coordinates: { x: -1, y: -1 },
@@ -217,7 +221,7 @@ let world: Types.Location[] = [
   {
     coordinates: {x: 0, y: 1},
     items: [],
-    spawner: (location) => itemGenerator([goldOre, letter], location, 0.1),
+    spawner: (location) => itemGenerator([goldOre, letter], location, 0.1, 6),
   }
 ];
 
