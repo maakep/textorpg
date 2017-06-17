@@ -9,15 +9,19 @@ type StateType = {
 export class EnterName extends React.Component<null, StateType>{
     constructor(props: null) {
         super(props);
+        var storedName = localStorage.getItem('name');
         this.state = {
-            name: null,
+            name: storedName,
         }
     }
     setName(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.keyCode == 13) {
             let newName = e.currentTarget.value;
             console.log(newName);
-            this.setState({name: newName});
+            if (newName.length > 2) {
+                localStorage.setItem('name', newName);
+                this.setState({name: newName});
+            }
         }
     }
 

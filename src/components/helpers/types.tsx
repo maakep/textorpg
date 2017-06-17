@@ -13,6 +13,7 @@ export type Location = {
   items?: Item[],
   isBlocker?: boolean,
   desc?: string,
+  spawner?: (a: Location) => void,
 }
 
 export type Message = {

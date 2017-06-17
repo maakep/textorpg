@@ -53,9 +53,10 @@ export function validateMessage(obj: Player, msg: string, socket: SocketIOClient
                 coord.x--;
                 break;
             default:
-                splitMsg[1] == null
+                splitMsg[1] == null;
+                break;
         }
-        obj.addMessage('You venture ' + ((!_String.isNullOrWhitespace(splitMsg[1])) ? splitMsg[1] : 'around in circles, getting nowhere'), );
+        obj.addMessage('You venture ' + ((!_String.isNullOrWhitespace(splitMsg[1])) ? splitMsg[1] : 'around in circles, getting nowhere'));
         socket.emit('client:move', {from: obj.state.location.coordinates, to: coord});
     } else if (splitMsg[0][0] === SLASH.CMD) { // First letter
         if(splitMsg[0] === SLASH.HELP.CMD) {
@@ -77,8 +78,9 @@ export function validateMessage(obj: Player, msg: string, socket: SocketIOClient
         }
         return false;
     } else if (splitMsg[0] === TAKE.CMD) {
-        if (splitMsg[1] != null)
-            socket.emit('client:take', {coordinates: obj.state.location.coordinates, item: splitMsg[1]});
+        if (splitMsg[1] != null) {
+            socket.emit('client:take', {coordinates: obj.state.location.coordinates, item: _String.afterSpace(msg)});            
+        }
     }
     return true;
 }

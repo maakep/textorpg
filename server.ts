@@ -2,6 +2,8 @@ import * as Types from './src/components/helpers/types';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
 import * as httpz from 'http';
+import * as StringHelper from './src/components/helpers/StringHelper';
+import * as TextFormat from './src/components/helpers/TextFormat';
 
 const app = express();
 const http = httpz.createServer(app);
@@ -69,37 +71,15 @@ io.on('connection', function(socket){
       socket.join(_(data.to));
 
       // Notify the others in the room
-      socket.in(_(data.to)).emit('server:message', '~~ A stranger comes wandering ~~');     
-    } else if (blocked) {
-      socket.emit('server:message', '~~ That path is blocked ~~');
-    }
+      socket.in(_(data.to)).emit('server:message', '~~ A stranger comes wandering ~~');
 
-    var room = io.sockets.adapter.rooms[_(data.to)];
-    if (room != null && !blocked) {
-      var message = '';
-      if (location.desc) {
-        message += location.desc;
-      }
-      if (location.items.length > 0) {
-        message += 'The following items are laying around: ';
-        items.forEach(function(item) {
-          message += item.name + ', ';
-        });
-        message = message.slice(0, -2);
-        message += '. ';
-      }
-      if (room.length > 1) {
-        message += 'You see ' + (room.length-1) + ' stranger(s) here. ';
-      }
-      if (message != '') {
+      // Location info for player
+      var message = getLocationString(location);
+      if (!StringHelper.isNullOrWhitespace(message)) {
         socket.emit('server:message', message);
       }
-    }
+    } 
   });
-});
-
-http.listen(3000, function() {
-  console.log('listening on *:3000');
 });
 
 function _(coordinates: Types.Coordinates) {
@@ -108,6 +88,38 @@ function _(coordinates: Types.Coordinates) {
 
 function equalCoordinates(coordinatesA: Types.Coordinates, coordinatesB: Types.Coordinates) {
   return coordinatesA.x == coordinatesB.x && coordinatesA.y == coordinatesB.y;
+}
+
+function getRoom(coordinates: Types.Coordinates) {
+  return io.sockets.adapter.rooms[_(coordinates)];
+}
+function peopleInRoom(room: any): number {
+  return room.length;
+}
+
+function getLocationString(location: Types.Location) {
+  let message: string = '';
+  let room = getRoom(location.coordinates);
+  let roomLength = peopleInRoom(room);
+
+  if (location.desc) {
+    message += location.desc;
+  }
+  if (location.isBlocker) {
+    message += 'The path is blocked. ';
+    return message;
+  }
+  if (location.spawner) {
+    message += "A spawner lies here. ";
+  }
+  if (roomLength > 1) {
+    message += 'You see ' + (roomLength - 1) + ' stranger(s) here. ';    
+  }
+  if (location.items.length > 0) {
+    message += 'You see the following items: ';
+    message += TextFormat.commaSeparatedArray(location.items, 'name');
+  }
+  return message;
 }
 
 function getLocation(coordinates: Types.Coordinates): Types.Location {
@@ -144,9 +156,27 @@ function getDefaultLocation(coordinates: Types.Coordinates) {
     },
     isBlocker: false,
     desc: null,
-    items: []
+    items: [],
   }
   return location;
+}
+
+
+function itemGenerator(items: Types.Item[], location: Types.Location, minuteInterval: number) {
+  console.log(location);
+  setInterval(function(){
+    items.forEach(function(item) {
+      location.items.push(item);
+    });
+  }, minuteInterval*1000*60);
+}
+
+function initializeWorld(): void {
+  for (var i = 0; i < world.length; i++) {
+    if (world[i].spawner != null) {
+      world[i].spawner(world[i]);
+    }
+  }
 }
 
 let letter: Types.Item = {
@@ -159,14 +189,40 @@ let getter: Types.Item = {
   value: 3
 };
 
+let goldOre: Types.Item = {
+  name: 'gold ore',
+  value: 50,
+}
+
+const nullWorld: Types.Location = {
+    coordinates: {
+      x: 0,
+      y: 0
+    },
+    isBlocker: false,
+    desc: null,
+    items: [],
+    spawner: null
+}
 let world: Types.Location[] = [
   {
       coordinates: { x: 1, y: 1 },
       items: [letter, getter],
-      desc: 'It\'s a beautiful area. '
+      desc: 'It\'s a beautiful area. ',
   },
   {
       coordinates: { x: -1, y: -1 },
       isBlocker: true
   },
+  {
+    coordinates: {x: 0, y: 1},
+    items: [],
+    spawner: (location) => itemGenerator([goldOre, letter], location, 0.1),
+  }
 ];
+
+
+http.listen(3000, function() {
+  console.log('listening on *:3000');
+  initializeWorld();
+});

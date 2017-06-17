@@ -22,15 +22,23 @@ type PropType = {
 export class Player extends React.Component<PropType, StateType> {
   constructor(props: PropType) {
     super(props);
-    this.state = {
-      messages: [],
-      location: {
-        coordinates: {x: 0, y: 0},
-      },
-      inventory: []
+    let savedState: StateType = JSON.parse(localStorage.getItem('state'));
+    if (savedState != null) {
+      this.state = savedState;
+      socket.emit('client:move', {from: {x: 0, y: 0}, to: this.state.location.coordinates});        
+    } else {
+      this.state = {
+        messages: [],
+        location: {
+          coordinates: {x: 0, y: 0},
+        },
+        inventory: []
+      }
     }
   }
-
+  componentDidUpdate() {
+    localStorage.setItem('state', JSON.stringify(this.state));
+  }
   componentDidMount() {
     let player: Player = this;
     socket.on('server:message', (data: string) => {
@@ -55,7 +63,7 @@ export class Player extends React.Component<PropType, StateType> {
     let displayMsg: string = this.props.name + ': ' + msg;
     if (Validate.validateMessage(this, msg, socket)) {
       this.addMessage(displayMsg);
-      socket.emit('client:message', {coordinates: this.state.location.coordinates, message: msg}); 
+      socket.emit('client:message', {coordinates: this.state.location.coordinates, message: displayMsg }); 
     };
   }
   addMessage(msg: string) {
