@@ -1,22 +1,23 @@
-import * as React from 'react';
-import Message from './message';
+import * as React from "react";
+import Message from "./message";
+import * as Type from "../helpers/types";
 
-type PropType = {
-    messages: string[];
-};
+interface IPropType {
+    messages: Type.IMessage[];
+}
 
-export default class Game extends React.Component<PropType, null> {
-    constructor (props: PropType) {
+export default class Game extends React.Component<IPropType, null> {
+    constructor(props: IPropType) {
         super(props);
     }
-    
-    render() {
+
+    public render() {
         return (
             <div className="game-message-wrapper">
-                {this.props.messages.map(function(msg: string, i: number) {
+                {this.props.messages.map((msg: Type.IMessage, i: number) => {
                     return <Message message={msg} key={i} />;
                 })}
-            </div>            
+            </div>
         );
     }
 }

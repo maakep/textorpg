@@ -1,207 +1,209 @@
-import * as Types from './src/components/helpers/types';
-import * as express from 'express';
-import * as socketIo from 'socket.io';
-import * as httpz from 'http';
-import * as StringHelper from './src/components/helpers/StringHelper';
-import * as TextFormat from './src/components/helpers/TextFormat';
+import * as Type from "./src/components/helpers/types";
+import * as express from "express";
+import * as socketIo from "socket.io";
+import * as httpz from "http";
+import * as StringHelper from "./src/components/helpers/string-helper";
+import * as TextFormat from "./src/components/helpers/text-format";
+import * as Message from "./src/components/helpers/message-helper";
 
 const app = express();
 const http = httpz.createServer(app);
 const io = socketIo(http);
 
-const SPAWN_LOCATION = '0,0';
-const ALL_CHAT = 'all_chat';
+const SPAWN_LOCATION = "0,0";
+const ALL_CHAT = "all_chat";
 
-app.get('/', function(req, res) {
-  res.sendFile(__dirname + '/index.html');
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html");
 });
 
-app.get('/*', function(req, res) {
+app.get("/*", (req, res) => {
   res.sendFile(__dirname + req.url);
 });
 
-
-io.on('connection', function(socket){
+io.on("connection", (socket) => {
+  // tslint:disable-next-line:no-console
   console.log("Client joined: " + socket.handshake.address);
-	socket.join(SPAWN_LOCATION);
+  socket.join(SPAWN_LOCATION);
   socket.join(ALL_CHAT);
-  socket.on('disconnecting', function() {
+  socket.on("disconnecting", () => {
+    // tslint:disable-next-line:no-console
     console.log("Client left: " + socket.handshake.address);
-    socket.in(socket.rooms[0]).emit('server:message', '~~ Somewhere in the world a stranger disappears with a light popping sound ~~');
+    const message = "~~ Somewhere in the world a stranger disappears with a light popping sound ~~";
+    socket.in(ALL_CHAT).emit("server:message", Message.ServerMessage(message));
   });
 
-  socket.on('client:message', function(data: Types.Message) {
-    socket.in(_(data.coordinates)).emit('server:message', data.message);
+  socket.on("client:message", (data: Type.IMessage) => {
+    socket.in(_(data.coordinates)).emit("server:message", data);
   });
 
-  socket.on('client:take', function(data: Types.TakeItem) {
-    var location: Types.Location = getLocation(data.coordinates);
-    var allItems: Types.Item[] = location.items;
-    var item: Types.Item;
-    
+  socket.on("client:take", (data: Type.ITakeItem) => {
+    const location: Type.ILocation = getLocation(data.coordinates);
+    const allItems: Type.IItem[] = location.items;
+    let item: Type.IItem;
+
     if (allItems.length > 0) {
       item = getItem(data.item, location);
     }
 
-    if (item != null) 
-    {
-      var index = location.items.indexOf(item);
-      if (index > -1){
+    if (item != null) {
+      const index = location.items.indexOf(item);
+      if (index > -1) {
         location.items.splice(index, 1);
       }
     }
-    
+
     updateLocation(data.coordinates, location);
-    socket.emit('server:take', item, data.item);
+    socket.emit("server:take", item, data.item);
   });
 
-  socket.on('client:move', function(data: {from: Types.Coordinates, to: Types.Coordinates}) {
-    var location: Types.Location = getLocation(data.to);
-    var blocked: boolean = location.isBlocker;
-    var desc: string = location.desc;
-    var items: Types.Item[] = location.items;
+  socket.on("client:move", (data: {from: Type.ICoordinates, to: Type.ICoordinates}) => {
+    const location: Type.ILocation = getLocation(data.to);
+    const blocked: boolean = location.isBlocker;
+    const desc: string = location.desc;
+    const items: Type.IItem[] = location.items;
 
     if (!equalCoordinates(data.from, data.to) && !blocked) {
       // Leave the room
       socket.leave(_(data.from));
 
       // Move the player
-      socket.emit('server:move', data.to);
+      socket.emit("server:move", data.to);
       socket.join(_(data.to));
 
       // Notify the others in the room
-      socket.in(_(data.to)).emit('server:message', '~~ A stranger comes wandering ~~');
+      socket.in(_(data.to)).emit("server:message", Message.ServerMessage("~~ A stranger comes wandering ~~"));
     }
       // Location info for player
-      var message = getLocationString(location);
-      if (!StringHelper.isNullOrWhitespace(message)) {
-        socket.emit('server:message', message);
-      }
+    const message = getLocationString(location);
+    if (!StringHelper.isNullOrWhitespace(message)) {
+      socket.emit("server:message", Message.ServerMessage(message));
+    }
   });
 });
 
-function _(coordinates: Types.Coordinates) {
-  return coordinates.x + ',' + coordinates.y;
+function _(coordinates: Type.ICoordinates) {
+  return coordinates.x + "," + coordinates.y;
 }
 
-function equalCoordinates(coordinatesA: Types.Coordinates, coordinatesB: Types.Coordinates) {
-  return coordinatesA.x == coordinatesB.x && coordinatesA.y == coordinatesB.y;
+function equalCoordinates(coordinatesA: Type.ICoordinates, coordinatesB: Type.ICoordinates) {
+  return coordinatesA.x === coordinatesB.x && coordinatesA.y === coordinatesB.y;
 }
 
-function getRoom(coordinates: Types.Coordinates) {
+function getRoom(coordinates: Type.ICoordinates) {
   return io.sockets.adapter.rooms[_(coordinates)];
 }
 function peopleInRoom(room: any): number {
-  if (room != null)
+  if (room != null) {
     return room.length;
+  }
 
   return 0;
 }
 
-function getLocationString(location: Types.Location) {
-  let message: string = '';
-  let room = getRoom(location.coordinates);
-  let roomLength = peopleInRoom(room);
+function getLocationString(location: Type.ILocation) {
+  let message: string = "";
+  const room = getRoom(location.coordinates);
+  const roomLength = peopleInRoom(room);
 
   if (location.desc) {
     message += location.desc;
   }
   if (location.isBlocker) {
-    message += 'The path is blocked. ';
+    message += "The path is blocked. ";
     return message;
   }
   if (location.spawner) {
     message += "A spawner lies here. ";
   }
   if (roomLength > 1) {
-    message += 'You see ' + (roomLength - 1) + ' stranger(s) here. ';    
+    message += "You see " + (roomLength - 1) + " stranger(s) here. ";
   }
   if (location.items.length > 0) {
-    message += 'You see the following items: ';
-    message += TextFormat.commaSeparatedArray(location.items, 'name');
+    message += "You see the following items: ";
+    message += TextFormat.commaSeparatedArray(location.items, "name");
   }
   return message;
 }
 
-function getLocation(coordinates: Types.Coordinates): Types.Location {
-  for (var i = 0; i < world.length; i++) {
-    if (equalCoordinates(world[i].coordinates, coordinates)) {
-      return world[i];
+function getLocation(coordinates: Type.ICoordinates): Type.ILocation {
+  for (const loc of world) {
+    if (equalCoordinates(loc.coordinates, coordinates)) {
+      return loc;
     }
   }
   return getDefaultLocation(coordinates);
 }
 
-function getItem(item: string, location: Types.Location): Types.Item {
-  for (var i = 0; i < location.items.length; i++) {
-    if (location.items[i].name == item) {
-      return location.items[i];
+function getItem(item: string, location: Type.ILocation): Type.IItem {
+  for (const locItem of location.items) {
+    if (locItem.name === item) {
+      return locItem;
     }
   }
   return null;
 }
 
-function updateLocation(coordinates: Types.Coordinates, location: Types.Location) {
-  for (var i = 0; i < world.length; i++) {
-    if (equalCoordinates(world[i].coordinates, coordinates)) {
-      world[i] = location;
+function updateLocation(coordinates: Type.ICoordinates, location: Type.ILocation) {
+  for (let loc of world) {
+    if (equalCoordinates(loc.coordinates, coordinates)) {
+      loc = location;
     }
   }
 }
 
-function getDefaultLocation(coordinates: Types.Coordinates) {
-  let location: Types.Location = {
+function getDefaultLocation(coordinates: Type.ICoordinates) {
+  const location: Type.ILocation = {
     coordinates: {
       x: coordinates.x,
-      y: coordinates.y
+      y: coordinates.y,
     },
     isBlocker: false,
     desc: null,
     items: [],
-  }
+  };
   return location;
 }
 
-
-function itemGenerator(items: Types.Item[], location: Types.Location, minuteInterval: number, maxItems: number) {
-  setInterval(function(){
+function itemGenerator(items: Type.IItem[], location: Type.ILocation, minuteInterval: number, maxItems: number) {
+  setInterval(() => {
     if (location.items.length <= maxItems) {
-      items.forEach(function(item) {
+      items.forEach((item) => {
         location.items.push(item);
       });
     }
-  }, minuteInterval*1000*60);
+  }, minuteInterval * 1000 * 60);
 }
 
 function initializeWorld(): void {
-  for (var i = 0; i < world.length; i++) {
-    if (world[i].spawner != null) {
-      world[i].spawner(world[i]);
+  for (const loc of world) {
+    if (loc.spawner != null) {
+      loc.spawner(loc);
     }
   }
 }
 
-let letter: Types.Item = {
-  name: 'letter',
-  value: 3
+const letter: Type.IItem = {
+  name: "letter",
+  value: 3,
 };
 
-let getter: Types.Item = {
-  name: 'getter',
-  value: 3
+const getter: Type.IItem = {
+  name: "getter",
+  value: 3,
 };
 
-let goldOre: Types.Item = {
-  name: 'gold ore',
+const goldOre: Type.IItem = {
+  name: "gold ore",
   value: 50,
-}
+};
 
-let PreAlphaTester: Types.Item = {
-  name: 'Medallion of the Pre-alpha Tester',
-  value: 0
-}
+const PreAlphaTester: Type.IItem = {
+  name: "Medallion of the Pre-alpha Tester",
+  value: 0,
+};
 
-let world: Types.Location[] = [
+const world: Type.ILocation[] = [
   {
     coordinates: { x: 0, y: 0 },
     desc: "A protective one way protective barrier. ",
@@ -216,17 +218,34 @@ let world: Types.Location[] = [
   },
   {
       coordinates: { x: -1, y: -1 },
-      isBlocker: true
+      isBlocker: true,
   },
   {
     coordinates: {x: 0, y: 1},
     items: [],
     spawner: (location) => itemGenerator([goldOre, letter], location, 0.1, 6),
-  }
+  },
 ];
 
-
-http.listen(3000, function() {
-  console.log('listening on *:3000');
+http.listen(3000, () => {
+  // tslint:disable-next-line:no-console
+  console.log("listening on *:3000");
   initializeWorld();
+});
+
+process.stdin.resume();
+process.on("SIGINT", () => {
+  io.emit("server:message", Message.SystemMessage("#### The server has shut down ####"));
+  // tslint:disable-next-line:no-console
+  console.log("Closing");
+  process.exit();
+});
+
+process.on("uncaughtException", (err: string) => {
+  io.emit("server:message", Message.SystemMessage("#### Server has crashed & shut down ####"));
+  // tslint:disable-next-line:no-console
+  console.log(err);
+  setTimeout(() => {
+    process.exit();
+  }, 1000);
 });

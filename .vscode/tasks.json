@@ -3,14 +3,14 @@
     // for the documentation about the tasks.json format
     "version": "0.1.0",
     "isShellCommand": true,
-    "command": "ts-node",
+    "command": "tslint",
     "showOutput": "always",
     "suppressTaskName": true,
     "tasks": [
         {
             "isBuildCommand": true,
             "taskName": "build",
-            "args": ["server.js"]
+            "args": ["./*.ts*"]
         }
     ]
 }

@@ -1,34 +1,32 @@
-import * as React from 'react';
-import Player from './components/Player';
-var name: string = null;
+import * as React from "react";
+import Player from "./components/Player";
 
-type StateType = {
-    name: string,
+interface IStateType {
+    name: string;
 }
 
-export class EnterName extends React.Component<null, StateType>{
+export class EnterName extends React.Component<null, IStateType> {
     constructor(props: null) {
         super(props);
-        var storedName = localStorage.getItem('name');
+        const storedName = localStorage.getItem("name");
         this.state = {
             name: storedName,
-        }
+        };
     }
-    setName(e: React.KeyboardEvent<HTMLInputElement>) {
-        if (e.keyCode == 13) {
-            let newName = e.currentTarget.value;
-            console.log(newName);
+    public setName(e: React.KeyboardEvent<HTMLInputElement>) {
+        if (e.keyCode === 13) {
+            const newName = e.currentTarget.value;
             if (newName.length > 2) {
-                localStorage.setItem('name', newName);
+                localStorage.setItem("name", newName);
                 this.setState({name: newName});
             }
         }
     }
 
-    render(){
+    public render() {
         return (
-            (this.state.name != null) 
-                ? <Player name={this.state.name} /> 
+            (this.state.name != null)
+                ? <Player name={this.state.name} />
                 : <input onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => this.setName(e)} />
         );
     }

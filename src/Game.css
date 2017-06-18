@@ -33,6 +33,16 @@
 
 .game-message {
   padding: 10px 0px 10px 20px;
+  overflow: hidden;
+}
+.game-message .player-message {
+  color: black;
+}
+.game-message .server-message {
+  color: grey;
+}
+.game-message .system-message {
+  color: red;
 }
 .game-message:before {
   content: '•';
@@ -41,6 +51,23 @@
 .game-message:nth-child(odd){
   background-color: rgba(0,0,0, 0.1);
 }
+
+.message-time:after {
+  content: '-';
+  margin-left: 5px;
+  margin-right: 5px;
+}
+.message-author {
+  font-weight: bold;
+}
+.message-author:after {
+  content: ':';
+  margin-right: 10px;
+}
+.message-text {
+  font-weight: italic;
+}
+
 
 .game-message-wrapper {
   padding: 10px;

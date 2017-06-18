@@ -1,27 +1,36 @@
-export type Item = {
-  name: string,
-  value: number,
-};
-
-export type Coordinates = {
-  x: number,
-  y: number,
+export interface IItem {
+  name: string;
+  value: number;
 }
 
-export type Location = { 
-  coordinates: Coordinates,
-  items?: Item[],
-  isBlocker?: boolean,
-  desc?: string,
-  spawner?: (a: Location) => void,
+export interface ICoordinates {
+  x: number;
+  y: number;
 }
 
-export type Message = {
-  coordinates: Coordinates,
-  message: string,
+export interface ILocation {
+  coordinates: ICoordinates;
+  items?: IItem[];
+  isBlocker?: boolean;
+  desc?: string;
+  spawner?: (a: ILocation) => void;
 }
 
-export type TakeItem = {
-  coordinates: Coordinates,
-  item: string,
+export interface IMessage {
+  coordinates?: ICoordinates;
+  message: string;
+  author?: string;
+  messageLevel: MessageLevel;
+  time: Date;
+}
+
+export class MessageLevel {
+  public static Player = "player-message";
+  public static System = "system-message";
+  public static Server = "server-message";
+}
+
+export interface ITakeItem {
+  coordinates: ICoordinates;
+  item: string;
 }
