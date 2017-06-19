@@ -1,6 +1,7 @@
 export interface IItem {
   name: string;
   value: number;
+  use?: () => void;
 }
 
 export interface ICoordinates {

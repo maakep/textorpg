@@ -35,13 +35,13 @@
   padding: 10px 0px 10px 20px;
   overflow: hidden;
 }
-.game-message .player-message {
+.game-message.player-message {
   color: black;
 }
-.game-message .server-message {
+.game-message.server-message {
   color: grey;
 }
-.game-message .system-message {
+.game-message.system-message {
   color: red;
 }
 .game-message:before {
