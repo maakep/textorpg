@@ -5,7 +5,7 @@ import * as httpz from "http";
 import * as StringHelper from "./src/components/helpers/string-helper";
 import * as TextFormat from "./src/components/helpers/text-format";
 import * as Message from "./src/components/helpers/message-helper";
-
+import {Player, IStateType} from "./src/components/Player";
 const app = express();
 const http = httpz.createServer(app);
 const io = socketIo(http);
@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
     let item: Type.IItem;
 
     if (allItems.length > 0) {
-      item = getItem(data.item, location);
+      item = getItemInLocation(data.item, location);
     }
 
     if (item != null) {
@@ -55,6 +55,16 @@ io.on("connection", (socket) => {
 
     updateLocation(data.coordinates, location);
     socket.emit("server:take", item, data.item);
+  });
+
+  socket.on("client:use", (data: Type.IUseData) => {
+    const item: Type.IItem = getItem(data.item);
+    console.log("state: ");
+    console.log(data.state);
+
+    if (item != null && item.use != null) {
+      socket.emit("server:use", item.use(data.state));
+    }
   });
 
   socket.on("client:move", (data: {from: Type.ICoordinates, to: Type.ICoordinates}) => {
@@ -97,7 +107,6 @@ function peopleInRoom(room: any): number {
   if (room != null) {
     return room.length;
   }
-
   return 0;
 }
 
@@ -135,13 +144,24 @@ function getLocation(coordinates: Type.ICoordinates): Type.ILocation {
   return getDefaultLocation(coordinates);
 }
 
-function getItem(item: string, location: Type.ILocation): Type.IItem {
+function getItemInLocation(item: string, location: Type.ILocation): Type.IItem {
   for (const locItem of location.items) {
     if (locItem.name === item) {
       return locItem;
     }
   }
   return null;
+}
+
+function getItem(item: string): Type.IItem {
+  for (const key in itemRep) {
+    if (itemRep.hasOwnProperty(key)) {
+      if (itemRep[key].name === item) {
+        return itemRep[key];
+      }
+    }
+  }
+  return itemRep[item];
 }
 
 function updateLocation(coordinates: Type.ICoordinates, location: Type.ILocation) {
@@ -183,37 +203,39 @@ function initializeWorld(): void {
   }
 }
 
-const letter: Type.IItem = {
-  name: "letter",
-  value: 3,
-};
-
-const getter: Type.IItem = {
-  name: "getter",
-  value: 3,
-};
-
-const goldOre: Type.IItem = {
-  name: "gold ore",
-  value: 50,
-};
-
-const PreAlphaTester: Type.IItem = {
-  name: "Medallion of the Pre-alpha Tester",
-  value: 0,
+// tslint:disable-next-line:one-variable-per-declaration
+const itemRep: {[name: string]: Type.IItem} = {
+  letter: {
+    name: "letter",
+    value: 3,
+  },
+  getter: {
+    name: "getter",
+    value: 3,
+    use: (state: IStateType) => ({stats: {strength: state.stats.strength + 1}}),
+  },
+  goldOre: {
+    name: "gold ore",
+    value: 50,
+  },
+  preAlphaTester: {
+    name: "medallion of the pre-alpha tester",
+    use: (state: IStateType) => ({location: {coordinates: {x: 0, y: 0}}}),
+    value: 0,
+  },
 };
 
 const world: Type.ILocation[] = [
   {
     coordinates: { x: 0, y: 0 },
     desc: "A protective one way protective barrier. ",
-    items: [PreAlphaTester],
-    spawner: (l) => itemGenerator([PreAlphaTester], l, 0.01, 1),
+    items: [itemRep.preAlphaTester],
+    spawner: (l) => itemGenerator([itemRep.preAlphaTester], l, 0.01, 1),
     isBlocker: true,
   },
   {
       coordinates: { x: 1, y: 1 },
-      items: [letter, getter],
+      items: [itemRep.letter, itemRep.getter, itemRep.preAlphaTester],
       desc: "It's a beautiful area. ",
   },
   {
@@ -223,7 +245,7 @@ const world: Type.ILocation[] = [
   {
     coordinates: {x: 0, y: 1},
     items: [],
-    spawner: (location) => itemGenerator([goldOre, letter], location, 0.1, 6),
+    spawner: (location) => itemGenerator([itemRep.goldOre, itemRep.letter], location, 0.1, 6),
   },
 ];
 

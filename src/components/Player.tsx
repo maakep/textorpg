@@ -3,18 +3,21 @@ import Header from "./header";
 import Game from "./game";
 import * as io from "socket.io-client";
 import * as Validate from "./helpers/message-validator";
-import {ILocation, IItem, ICoordinates, IMessage, MessageLevel} from "./helpers/types";
+import {ILocation, IItem, ICoordinates, IMessage, MessageLevel, IStats} from "./helpers/types";
 import * as Message from "./helpers/message-helper";
 
 const socket = io();
 
 import "../Game.css";
 
-interface IStateType {
+export interface IStateType {
     messages: IMessage[];
     location: ILocation;
     inventory: IItem[];
+    stats: IStats;
+    version: number;
 }
+const STATE_VERSION = 0.1;
 
 interface IPropType {
   name: string;
@@ -25,17 +28,23 @@ export class Player extends React.Component<IPropType, IStateType> {
     super(props);
     const savedState: IStateType = JSON.parse(localStorage.getItem("state"));
 
-    if (savedState != null) {
+    if (savedState != null && savedState.version === STATE_VERSION) {
       this.state = savedState;
       socket.emit("client:move", {from: {x: 0, y: 0}, to: this.state.location.coordinates});
     } else {
-      this.state = {
+      this.state = Object.assign({
         inventory: [],
         location: {
           coordinates: {x: 0, y: 0},
         },
         messages: [],
-      };
+        stats: {
+          strength: 0,
+          stamina: 0,
+        },
+        version: STATE_VERSION,
+      },
+      savedState);
     }
   }
   public componentDidUpdate() {
@@ -59,12 +68,18 @@ export class Player extends React.Component<IPropType, IStateType> {
     socket.on("server:move", (data: ICoordinates) => {
       player.setState({location: {coordinates: data}});
     });
+    socket.on("server:use", (data: (player: Player) => void) => {
+      console.log(data);
+      if (data !== null) {
+        this.setState(data);
+      }
+    });
   }
 
   public addPlayerMessage(msg: IMessage) {
     this.addMessage(msg);
     if (Validate.validateMessage(this, msg.message, socket)) {
-      socket.emit("client:message", {coordinates: this.state.location.coordinates, message: msg });
+      socket.emit("client:message", msg);
     }
   }
   public addMessage(msg: IMessage) {

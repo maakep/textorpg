@@ -1,7 +1,19 @@
+import * as Player from "../Player";
+
+export interface IStats {
+  strength: number;
+  stamina: number;
+}
+
 export interface IItem {
   name: string;
   value: number;
-  use?: () => void;
+  use?: (state: Player.IStateType) => any;
+}
+
+export interface IUseData {
+  item: string;
+  state: Player.IStateType;
 }
 
 export interface ICoordinates {
