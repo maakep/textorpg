@@ -5,7 +5,7 @@ import * as httpz from "http";
 import * as StringHelper from "./src/components/helpers/string-helper";
 import * as TextFormat from "./src/components/helpers/text-format";
 import * as Message from "./src/components/helpers/message-helper";
-import {Player, IStateType} from "./src/components/Player";
+import {Player, IStateType} from "./src/components/player";
 const app = express();
 const http = httpz.createServer(app);
 const io = socketIo(http);
@@ -59,11 +59,11 @@ io.on("connection", (socket) => {
 
   socket.on("client:use", (data: Type.IUseData) => {
     const item: Type.IItem = getItem(data.item);
-    console.log("state: ");
-    console.log(data.state);
 
     if (item != null && item.use != null) {
-      socket.emit("server:use", item.use(data.state));
+      const returnData: Type.IUseReturnMessage = item.use(data.state);
+      console.log(returnData.message);
+      socket.emit("server:use", returnData);
     }
   });
 
@@ -220,7 +220,8 @@ const itemRep: {[name: string]: Type.IItem} = {
   },
   preAlphaTester: {
     name: "medallion of the pre-alpha tester",
-    use: (state: IStateType) => ({location: {coordinates: {x: 0, y: 0}}}),
+    use: (state: IStateType): Type.IUseReturnMessage => ({state: {location: {coordinates: {x: 0, y: 0}}},
+                                                          message: "You are teleported to The Origin"}),
     value: 0,
   },
 };

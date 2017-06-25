@@ -3,21 +3,22 @@ import Header from "./header";
 import Game from "./game";
 import * as io from "socket.io-client";
 import * as Validate from "./helpers/message-validator";
-import {ILocation, IItem, ICoordinates, IMessage, MessageLevel, IStats} from "./helpers/types";
+import * as Type from "./helpers/types";
 import * as Message from "./helpers/message-helper";
+import * as StringHelper from "./helpers/string-helper";
 
 const socket = io();
 
-import "../Game.css";
+import "../game.css";
 
 export interface IStateType {
-    messages: IMessage[];
-    location: ILocation;
-    inventory: IItem[];
-    stats: IStats;
+    messages: Type.IMessage[];
+    location: Type.ILocation;
+    inventory: Type.IItem[];
+    stats: Type.IStats;
     version: number;
 }
-const STATE_VERSION = 0.1;
+const STATE_VERSION = 0.11;
 
 interface IPropType {
   name: string;
@@ -41,6 +42,7 @@ export class Player extends React.Component<IPropType, IStateType> {
         stats: {
           strength: 0,
           stamina: 0,
+          charisma: 0,
         },
         version: STATE_VERSION,
       },
@@ -52,37 +54,41 @@ export class Player extends React.Component<IPropType, IStateType> {
   }
   public componentDidMount() {
     const player: Player = this;
-    socket.on("server:message", (data: IMessage) => {
+    socket.on("server:message", (data: Type.IMessage) => {
       player.addMessage(data);
     });
-    socket.on("server:take", (item: IItem, inputItem: string) => {
+    socket.on("server:take", (item: Type.IItem, inputItem: string) => {
         if (item == null) {
             player.addMessage(Message.ServerMessage("Your hands search but you cannot find any " + inputItem));
             return;
         }
 
-        const inventory: IItem[] = player.state.inventory;
+        const inventory: Type.IItem[] = player.state.inventory;
         inventory.push(item);
         player.setState({inventory});
     });
-    socket.on("server:move", (data: ICoordinates) => {
+    socket.on("server:move", (data: Type.ICoordinates) => {
       player.setState({location: {coordinates: data}});
     });
-    socket.on("server:use", (data: (player: Player) => void) => {
-      console.log(data);
-      if (data !== null) {
-        this.setState(data);
+    socket.on("server:use", (data: Type.IUseReturnMessage) => {
+      if (data != null) {
+        if (!StringHelper.isNullOrWhitespace(data.message)) {
+          this.addMessage(Message.ServerMessage(data.message));
+        }
+        if (data.state !== null) {
+          this.setState(data.state);
+        }
       }
     });
   }
 
-  public addPlayerMessage(msg: IMessage) {
+  public addPlayerMessage(msg: Type.IMessage) {
     this.addMessage(msg);
     if (Validate.validateMessage(this, msg.message, socket)) {
       socket.emit("client:message", msg);
     }
   }
-  public addMessage(msg: IMessage) {
+  public addMessage(msg: Type.IMessage) {
     const msgList = this.state.messages;
     if (msgList.unshift(msg) > 100) {
         msgList.pop();

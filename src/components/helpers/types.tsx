@@ -1,19 +1,25 @@
-import * as Player from "../Player";
+import * as Player from "../player";
 
 export interface IStats {
   strength: number;
   stamina: number;
+  charisma: number;
 }
 
 export interface IItem {
   name: string;
   value: number;
-  use?: (state: Player.IStateType) => any;
+  use?: (state: Player.IStateType) => IUseReturnMessage;
 }
 
 export interface IUseData {
   item: string;
   state: Player.IStateType;
+}
+
+export interface IUseReturnMessage {
+  state?: any;
+  message?: string;
 }
 
 export interface ICoordinates {

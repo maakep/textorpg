@@ -1,5 +1,5 @@
 import * as React from "react";
-import Player from "./components/Player";
+import Player from "./components/player";
 
 interface IStateType {
     name: string;

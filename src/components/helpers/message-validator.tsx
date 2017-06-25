@@ -1,4 +1,4 @@
-import Player from "../Player";
+import Player from "../player";
 import * as Type from "./types";
 import * as _String from "./string-helper";
 import * as TextFormat from "./text-format";

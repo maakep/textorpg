@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import {EnterName} from "./EnterName";
+import {EnterName} from "./enter-name";
 
 ReactDOM.render(
   <EnterName />,
