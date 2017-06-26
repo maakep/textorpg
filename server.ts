@@ -53,7 +53,7 @@ io.on("connection", (socket) => {
       }
     }
 
-    updateLocation(data.coordinates, location);
+    updateLocation(location);
     socket.emit("server:take", item, data.item);
   });
 
@@ -62,8 +62,16 @@ io.on("connection", (socket) => {
 
     if (item != null && item.use != null) {
       const returnData: Type.IUseReturnMessage = item.use(data.state);
-      console.log(returnData.message);
       socket.emit("server:use", returnData);
+    }
+  });
+
+  socket.on("client:drop", (data: Type.IDropItem) => {
+    const item: Type.IItem = getItem(data.item);
+    if (item != null) {
+      const location = getLocation(data.coordinates);
+      location.items.push(item);
+      updateLocation(location);
     }
   });
 
@@ -164,12 +172,14 @@ function getItem(item: string): Type.IItem {
   return itemRep[item];
 }
 
-function updateLocation(coordinates: Type.ICoordinates, location: Type.ILocation) {
+function updateLocation(location: Type.ILocation) {
   for (let loc of world) {
-    if (equalCoordinates(loc.coordinates, coordinates)) {
+    if (equalCoordinates(loc.coordinates, location.coordinates)) {
       loc = location;
+      return true;
     }
   }
+  world.push(location);
 }
 
 function getDefaultLocation(coordinates: Type.ICoordinates) {

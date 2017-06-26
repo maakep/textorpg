@@ -14,7 +14,6 @@ const CMDS: any = {
         EAST: "east",
     },
     SLASH: {
-        CMD: "/",
         HELP: {
             CMD: "/help",
             DESC: "Display available commands",
@@ -36,6 +35,10 @@ const CMDS: any = {
         CMD: "use",
         DESC: "Use a usable item: use <item name>",
     },
+    DROP: {
+        CMD: "drop",
+        DESC: "Drop an item: drop <item name>",
+    },
 };
 
 export function isCommand(message: string): boolean {
@@ -45,35 +48,58 @@ export function validateMessage(player: Player, msg: string, socket: SocketIOCli
     msg = msg.toLowerCase();
     const splitMsg = msg.split(" ");
 
-    if (splitMsg[0] === CMDS.WALK.CMD) {
-        const coord = Object.assign({}, player.state.location.coordinates);
-
-        switch (splitMsg[1]) {
-            case CMDS.WALK.NORTH:
-                coord.y++;
-                break;
-            case CMDS.WALK.SOUTH:
-                coord.y--;
-                break;
-            case CMDS.WALK.EAST:
-                coord.x++;
-                break;
-            case CMDS.WALK.WEST:
-                coord.x--;
-                break;
-            default:
-                splitMsg[1] = null;
-                break;
+    function removeItemFromInventory(item: string) {
+        const inventory = player.state.inventory;
+        for (const i in inventory) {
+            if (inventory[i].name === item) {
+                inventory.splice(inventory.indexOf(inventory[i]), 1);
+                player.setState({inventory});
+                return true;
+            }
         }
+        return false;
+    }
 
-        const msgMessage = "You venture " + ((!_String.isNullOrWhitespace(splitMsg[1]))
-                                        ? splitMsg[1]
-                                        : "around in circles, getting nowhere");
-        const returnMessage: Type.IMessage = Message.ServerMessage(msgMessage);
-        player.addMessage(returnMessage);
-        socket.emit("client:move", {from: player.state.location.coordinates, to: coord});
-    } else if (splitMsg[0][0] === CMDS.SLASH.CMD) { // First letter
-        if (splitMsg[0] === CMDS.SLASH.HELP.CMD) {
+    function playerHasItem(item: string) {
+        const inventory = player.state.inventory;
+        for (const i in inventory) {
+            if (inventory[i].name === item) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    switch (splitMsg[0]) {
+        case CMDS.WALK.CMD:
+            const coord = Object.assign({}, player.state.location.coordinates);
+
+            switch (splitMsg[1]) {
+                case CMDS.WALK.NORTH:
+                    coord.y++;
+                    break;
+                case CMDS.WALK.SOUTH:
+                    coord.y--;
+                    break;
+                case CMDS.WALK.EAST:
+                    coord.x++;
+                    break;
+                case CMDS.WALK.WEST:
+                    coord.x--;
+                    break;
+                default:
+                    splitMsg[1] = null;
+                    break;
+            }
+
+            const msgMessage = "You venture " + ((!_String.isNullOrWhitespace(splitMsg[1]))
+                                            ? splitMsg[1]
+                                            : "around in circles, getting nowhere");
+            const returnMessage: Type.IMessage = Message.ServerMessage(msgMessage);
+            player.addMessage(returnMessage);
+            socket.emit("client:move", {from: player.state.location.coordinates, to: coord});
+            break;
+        case CMDS.SLASH.HELP.CMD: // First letter /*splitMsg[0][0] ===*/
             for (const key in CMDS) {
                 if (CMDS.hasOwnProperty(key)) {
                     for (const key2 in CMDS[key]) {
@@ -84,18 +110,15 @@ export function validateMessage(player: Player, msg: string, socket: SocketIOCli
                     player.addMessage(Message.ServerMessage(CMDS[key].CMD + " - " + CMDS[key].DESC));
                 }
             }
-            /*player.addMessage(Message.ServerMessage(CMDS.SLASH.HELP.CMD + " - " + CMDS.SLASH.HELP.DESC));
-            player.addMessage(Message.ServerMessage(CMDS.WALK.CMD + " - " + CMDS.WALK.DESC));
-            player.addMessage(Message.ServerMessage(CMDS.TAKE.CMD + " - " + CMDS.TAKE.DESC));
-            player.addMessage(Message.ServerMessage(CMDS.SLASH.STATS.CMD + " - " + CMDS.SLASH.STATS.DESC));
-            player.addMessage(Message.ServerMessage(CMDS.SLASH.INVENTORY.CMD + " - " + CMDS.SLASH.INVENTORY.DESC));*/
-        } else if (splitMsg[0] === CMDS.SLASH.STATS.CMD) {
+            break;
+        case CMDS.SLASH.STATS.CMD:
             const message = "You are currently at {" +
                             player.state.location.coordinates.x +
                             ", " +
                             player.state.location.coordinates.y + "}";
             player.addMessage(Message.ServerMessage(message));
-        } else if (splitMsg [0] === CMDS.SLASH.INVENTORY.CMD) {
+            break;
+        case CMDS.SLASH.INVENTORY.CMD:
             const inventory: Type.IItem[] = player.state.inventory;
             const items: string = TextFormat.commaSeparatedArray(inventory, "name");
             if (items != null) {
@@ -103,20 +126,35 @@ export function validateMessage(player: Player, msg: string, socket: SocketIOCli
             } else {
                 player.addMessage(Message.ServerMessage("No items in inventory"));
             }
-        }
-        return false;
-    } else if (splitMsg[0] === CMDS.TAKE.CMD) {
-        if (splitMsg[1] != null) {
-            socket.emit("client:take",
-            {coordinates: player.state.location.coordinates,
-                item: _String.stringAfterSpace(msg)});
-        }
-    } else if (splitMsg[0] === CMDS.USE.CMD) {
-        if (splitMsg[1] != null) {
-            const data: Type.IUseData = { item: _String.stringAfterSpace(msg),
-                                          state: player.state};
-            socket.emit("client:use", data);
-        }
+            return false;
+        case CMDS.TAKE.CMD:
+            if (splitMsg[1] != null) {
+                socket.emit("client:take",
+                {coordinates: player.state.location.coordinates,
+                    item: _String.stringAfterSpace(msg)});
+            }
+            break;
+        case CMDS.USE.CMD:
+            if (splitMsg[1] != null) {
+                const data: Type.IUseData = { item: _String.stringAfterSpace(msg),
+                                            state: player.state};
+                socket.emit("client:use", data);
+            }
+            break;
+        case CMDS.DROP.CMD:
+            if (splitMsg[1] != null) {
+                const item = _String.stringAfterSpace(msg);
+                if (playerHasItem(item)) {
+                    if (removeItemFromInventory(item)) {
+                        const dropItem: Type.IDropItem = {
+                            item,
+                            coordinates: player.state.location.coordinates,
+                        };
+                        socket.emit("client:drop", dropItem);
+                    }
+                }
+            }
+            break;
     }
     return true;
 }

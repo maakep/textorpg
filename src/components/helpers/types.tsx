@@ -17,6 +17,11 @@ export interface IUseData {
   state: Player.IStateType;
 }
 
+export interface IDropItem {
+  item: string;
+  coordinates: ICoordinates;
+}
+
 export interface IUseReturnMessage {
   state?: any;
   message?: string;
