@@ -96,8 +96,15 @@ export function validateMessage(player: Player, msg: string, socket: SocketIOCli
                                             ? splitMsg[1]
                                             : "around in circles, getting nowhere");
             const returnMessage: Type.IMessage = Message.ServerMessage(msgMessage);
-            player.addMessage(returnMessage);
-            socket.emit("client:move", {from: player.state.location.coordinates, to: coord});
+            const hasStamina = player.updateStamina(-1);
+            if (!hasStamina) {
+                player.addMessage(
+                    Message.ServerMessage("You're exhausted, wait for your stamina to regenerate."),
+                );
+            } else {
+                player.addMessage(returnMessage);
+                socket.emit("client:move", {from: player.state.location.coordinates, to: coord});
+            }
             break;
         case CMDS.SLASH.HELP.CMD: // First letter /*splitMsg[0][0] ===*/
             for (const key in CMDS) {

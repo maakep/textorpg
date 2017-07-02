@@ -18,7 +18,7 @@ export interface IStateType {
     stats: Type.IStats;
     version: number;
 }
-const STATE_VERSION = 0.11;
+const STATE_VERSION = 0.12;
 
 interface IPropType {
   name: string;
@@ -33,7 +33,7 @@ export class Player extends React.Component<IPropType, IStateType> {
       this.state = savedState;
       socket.emit("client:move", {from: {x: 0, y: 0}, to: this.state.location.coordinates});
     } else {
-      this.state = Object.assign({
+      this.state = Object.assign(savedState, {
         inventory: [],
         location: {
           coordinates: {x: 0, y: 0},
@@ -41,13 +41,31 @@ export class Player extends React.Component<IPropType, IStateType> {
         messages: [],
         stats: {
           strength: 0,
-          stamina: 0,
+          stamina: {value: 0, max: 10},
           charisma: 0,
         },
         version: STATE_VERSION,
-      },
-      savedState);
+      });
     }
+
+    this.generateStamina();
+  }
+  public generateStamina() {
+    const player = this;
+    setInterval(() => {
+      this.updateStamina(1);
+    }, 1000 * (1 + (15 - player.state.stats.stamina.max)));
+  }
+
+  public updateStamina(val: number) {
+    const stats = Object.assign({}, this.state.stats);
+
+    if (stats.stamina.value + val >= 0 && stats.stamina.value + val <= stats.stamina.max) {
+      stats.stamina.value += val;
+      this.setState({stats});
+      return true;
+    }
+    return false;
   }
   public componentDidUpdate() {
     localStorage.setItem("state", JSON.stringify(this.state));

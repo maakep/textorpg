@@ -2,7 +2,7 @@ import * as Player from "../player";
 
 export interface IStats {
   strength: number;
-  stamina: number;
+  stamina: {value: number, max: number};
   charisma: number;
 }
 
