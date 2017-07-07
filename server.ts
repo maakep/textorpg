@@ -213,7 +213,6 @@ function initializeWorld(): void {
   }
 }
 
-// tslint:disable-next-line:one-variable-per-declaration
 const itemRep: {[name: string]: Type.IItem} = {
   letter: {
     name: "letter",
