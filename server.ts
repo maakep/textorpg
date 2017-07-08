@@ -6,6 +6,10 @@ import * as StringHelper from "./src/components/helpers/string-helper";
 import * as TextFormat from "./src/components/helpers/text-format";
 import * as Message from "./src/components/helpers/message-helper";
 import {Player, IStateType} from "./src/components/player";
+
+import itemRep from "./item-repository";
+import world from "./world";
+
 const app = express();
 const http = httpz.createServer(app);
 const io = socketIo(http);
@@ -212,52 +216,6 @@ function initializeWorld(): void {
     }
   }
 }
-
-const itemRep: {[name: string]: Type.IItem} = {
-  letter: {
-    name: "letter",
-    value: 3,
-  },
-  getter: {
-    name: "getter",
-    value: 3,
-    use: (state: IStateType) => ({stats: {strength: state.stats.strength + 1}}),
-  },
-  goldOre: {
-    name: "gold ore",
-    value: 50,
-  },
-  preAlphaTester: {
-    name: "medallion of the pre-alpha tester",
-    use: (state: IStateType): Type.IUseReturnMessage => ({state: {location: {coordinates: {x: 0, y: 0}}},
-                                                          message: "You are teleported to The Origin"}),
-    value: 0,
-  },
-};
-
-const world: Type.ILocation[] = [
-  {
-    coordinates: { x: 0, y: 0 },
-    desc: "A protective one way protective barrier. ",
-    items: [itemRep.preAlphaTester],
-    spawner: (l) => itemGenerator([itemRep.preAlphaTester], l, 0.01, 1),
-    isBlocker: true,
-  },
-  {
-      coordinates: { x: 1, y: 1 },
-      items: [itemRep.letter, itemRep.getter, itemRep.preAlphaTester],
-      desc: "It's a beautiful area. ",
-  },
-  {
-      coordinates: { x: -1, y: -1 },
-      isBlocker: true,
-  },
-  {
-    coordinates: {x: 0, y: 1},
-    items: [],
-    spawner: (location) => itemGenerator([itemRep.goldOre, itemRep.letter], location, 0.1, 6),
-  },
-];
 
 http.listen(3000, () => {
   // tslint:disable-next-line:no-console

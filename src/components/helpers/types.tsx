@@ -58,3 +58,14 @@ export interface ITakeItem {
   coordinates: ICoordinates;
   item: string;
 }
+
+export interface IWorldStatePlayer {
+  player: {
+    id: string,
+    name: string,
+    coordinates: ICoordinates,
+  };
+}
+export interface IWorldState {
+  players: IWorldStatePlayer[];
+}
