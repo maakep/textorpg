@@ -38,6 +38,7 @@ export interface ILocation {
   isBlocker?: boolean;
   desc?: string;
   spawner?: (a: ILocation) => void;
+  players?: IServerPlayer[];
 }
 
 export interface IMessage {
@@ -60,12 +61,12 @@ export interface ITakeItem {
 }
 
 export interface IWorldStatePlayer {
-  player: {
-    id: string,
-    name: string,
-    coordinates: ICoordinates,
-  };
+  player: IServerPlayer;
+  coordinates?: ICoordinates;
 }
-export interface IWorldState {
-  players: IWorldStatePlayer[];
+
+export interface IServerPlayer {
+  socketId: string;
+  name: string;
+  online?: boolean;
 }

@@ -10,6 +10,8 @@ import {Player, IStateType} from "./src/components/player";
 import itemRep from "./item-repository";
 import world from "./world";
 
+const playerList: Type.IServerPlayer[] = [];
+
 const app = express();
 const http = httpz.createServer(app);
 const io = socketIo(http);
@@ -35,6 +37,21 @@ io.on("connection", (socket) => {
     console.log("Client left: " + socket.handshake.address);
     const message = "~~ Somewhere in the world a stranger disappears with a light popping sound ~~";
     socket.in(ALL_CHAT).emit("server:message", Message.ServerMessage(message));
+    // getPlayer(socket.client.id).online = false;
+  });
+
+  socket.on("client:register", (name: string) => {
+    const player: Type.IServerPlayer = {
+      socketId: socket.client.id,
+      name,
+      online: true,
+    };
+
+    if (playerList.indexOf(player) === -1) {
+      playerList.push(player);
+    } else {
+      // playerList[playerList.indexOf(player)].online = true;
+    }
   });
 
   socket.on("client:message", (data: Type.IMessage) => {
@@ -81,9 +98,11 @@ io.on("connection", (socket) => {
 
   socket.on("client:move", (data: {from: Type.ICoordinates, to: Type.ICoordinates}) => {
     const location: Type.ILocation = getLocation(data.to);
+    const locationFrom: Type.ILocation = getLocation(data.from);
     const blocked: boolean = location.isBlocker;
     const desc: string = location.desc;
     const items: Type.IItem[] = location.items;
+    const player: Type.IServerPlayer = getPlayer(socket.client.id);
 
     if (!equalCoordinates(data.from, data.to) && !blocked) {
       // Leave the room
@@ -92,6 +111,9 @@ io.on("connection", (socket) => {
       // Move the player
       socket.emit("server:move", data.to);
       socket.join(_(data.to));
+
+      // Move player in world
+      updateWorldPlayerState(locationFrom, location, player);
 
       // Notify the others in the room
       socket.in(_(data.to)).emit("server:message", Message.ServerMessage("~~ A stranger comes wandering ~~"));
@@ -114,6 +136,14 @@ function equalCoordinates(coordinatesA: Type.ICoordinates, coordinatesB: Type.IC
 
 function getRoom(coordinates: Type.ICoordinates) {
   return io.sockets.adapter.rooms[_(coordinates)];
+}
+function getPlayer(socketId: string): Type.IServerPlayer {
+  for (const player of playerList) {
+    if (player.socketId === socketId) {
+      return player;
+    }
+  }
+  return null;
 }
 function peopleInRoom(room: any): number {
   if (room != null) {
@@ -148,12 +178,14 @@ function getLocationString(location: Type.ILocation) {
 }
 
 function getLocation(coordinates: Type.ICoordinates): Type.ILocation {
+  let defLoc = getDefaultLocation(coordinates);
   for (const loc of world) {
     if (equalCoordinates(loc.coordinates, coordinates)) {
-      return loc;
+      defLoc = Object.assign(defLoc, loc);
+      break;
     }
   }
-  return getDefaultLocation(coordinates);
+  return defLoc;
 }
 
 function getItemInLocation(item: string, location: Type.ILocation): Type.IItem {
@@ -195,6 +227,7 @@ function getDefaultLocation(coordinates: Type.ICoordinates) {
     isBlocker: false,
     desc: null,
     items: [],
+    players: [],
   };
   return location;
 }
@@ -215,6 +248,16 @@ function initializeWorld(): void {
       loc.spawner(loc);
     }
   }
+}
+
+function updateWorldPlayerState(from: Type.ILocation, to: Type.ILocation,
+                                player: Type.IServerPlayer) {
+  if (from.players.indexOf(player) > -1) {
+    from.players.splice(from.players.indexOf(player), 1);
+    updateLocation(from);
+  }
+  to.players.push(player);
+  updateLocation(to);
 }
 
 http.listen(3000, () => {

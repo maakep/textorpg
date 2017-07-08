@@ -9,7 +9,15 @@ const itemRep: {[name: string]: Type.IItem} = {
   getter: {
     name: "getter",
     value: 3,
-    use: (state: IStateType) => ({stats: {strength: state.stats.strength + 1}}),
+    use: (state: IStateType): Type.IUseReturnMessage => {
+      const newState = state;
+      newState.stats.stamina.max += 1;
+      const returnMsg: Type.IUseReturnMessage = {
+        state: newState,
+        message: "You feel your cardio increasing to " + newState.stats.stamina.max,
+      };
+      return returnMsg;
+    },
   },
   goldOre: {
     name: "gold ore",

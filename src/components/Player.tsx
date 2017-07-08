@@ -27,13 +27,15 @@ interface IPropType {
 export class Player extends React.Component<IPropType, IStateType> {
   constructor(props: IPropType) {
     super(props);
+    socket.emit("client:register", props.name);
+
     const savedState: IStateType = JSON.parse(localStorage.getItem("state"));
 
     if (savedState != null && savedState.version === STATE_VERSION) {
       this.state = savedState;
       socket.emit("client:move", {from: {x: 0, y: 0}, to: this.state.location.coordinates});
     } else {
-      this.state = Object.assign(savedState, {
+      this.state = Object.assign({}, savedState, {
         inventory: [],
         location: {
           coordinates: {x: 0, y: 0},
@@ -47,7 +49,6 @@ export class Player extends React.Component<IPropType, IStateType> {
         version: STATE_VERSION,
       });
     }
-
     this.generateStamina();
   }
   public generateStamina() {
@@ -94,7 +95,7 @@ export class Player extends React.Component<IPropType, IStateType> {
           this.addMessage(Message.ServerMessage(data.message));
         }
         if (data.state !== null) {
-          this.setState(data.state);
+          this.setState(Object.assign(this.state, data.state));
         }
       }
     });
