@@ -1,8 +1,6 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-import {EnterName} from "./enter-name";
+import * as ReactDOM from "react-dom/client";
+import { EnterName } from "./enter-name";
 
-ReactDOM.render(
-  <EnterName />,
-  document.getElementById("root") as HTMLElement,
-);
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<EnterName />);

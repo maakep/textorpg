@@ -5,8 +5,8 @@ interface IStateType {
     name: string;
 }
 
-export class EnterName extends React.Component<null, IStateType> {
-    constructor(props: null) {
+export class EnterName extends React.Component<{}, IStateType> {
+    constructor(props: {}) {
         super(props);
         const storedName = localStorage.getItem("name");
         this.state = {

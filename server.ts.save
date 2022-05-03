@@ -1,10 +1,12 @@
 import * as Type from "./src/components/helpers/types";
 import * as express from "express";
-import { Server } from "socket.io";
+import * as socketIo from "socket.io";
 import * as httpz from "http";
 import * as StringHelper from "./src/components/helpers/string-helper";
 import * as TextFormat from "./src/components/helpers/text-format";
 import * as Message from "./src/components/helpers/message-helper";
+import {Player, IStat
+eType} from "./src/components/player";
 
 import itemRep from "./item-repository";
 import world from "./world";
@@ -13,7 +15,7 @@ const playerList: Type.IServerPlayer[] = [];
 
 const app = express();
 const http = httpz.createServer(app);
-const io = new Server(http);
+const io = socketIo(http);
 
 const SPAWN_LOCATION = "0,0";
 const ALL_CHAT = "all_chat";
@@ -36,12 +38,12 @@ io.on("connection", (socket) => {
     console.log("Client left: " + socket.handshake.address);
     const message = "~~ Somewhere in the world a stranger disappears with a light popping sound ~~";
     socket.in(ALL_CHAT).emit("server:message", Message.ServerMessage(message));
-    // getPlayer(socket.id).online = false;
+    // getPlayer(socket.client.id).online = false;
   });
 
   socket.on("client:register", (name: string) => {
     const player: Type.IServerPlayer = {
-      socketId: socket.id,
+      socketId: socket.client.id,
       name,
       online: true,
     };
@@ -101,7 +103,7 @@ io.on("connection", (socket) => {
     const blocked: boolean = location.isBlocker;
     const desc: string = location.desc;
     const items: Type.IItem[] = location.items;
-    const player: Type.IServerPlayer = getPlayer(socket.id);
+    const player: Type.IServerPlayer = getPlayer(socket.client.id);
 
     if (!equalCoordinates(data.from, data.to) && !blocked) {
       // Leave the room
